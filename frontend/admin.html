@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IIIT Kottayam Chatbot Admin</title>
+    <style>
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f1e8; margin: 0; padding: 24px; color: #1a1a1a; }
+        .container { max-width: 1380px; margin: 0 auto; }
+        .card { background: #ffffff; border-radius: 24px; padding: 32px 36px; border: 1px solid #e8e3d8; box-shadow: 0 4px 16px rgba(0,0,0,0.03); margin-bottom: 24px; }
+        h1, h2, h3 { margin-top: 0; color: #1a1a1a; font-weight: 700; letter-spacing: -0.02em; }
+        h1 { font-size: 1.6rem; }
+        h2 { font-size: 1.3rem; }
+        .hidden { display: none !important; }
+        
+        /* Login */
+        #login-view { max-width: 440px; margin: 80px auto; text-align: center; border-radius: 28px; padding: 40px 36px; }
+        input[type="password"], input[type="text"], textarea, select {
+            width: 100%; padding: 12px 16px; margin-bottom: 16px; border: 1px solid #e8e3d8; background: #faf8f3; border-radius: 12px; box-sizing: border-box; font-size: 14px; color: #1a1a1a; outline: none; transition: border-color 0.2s;
+        }
+        input:focus, textarea:focus, select:focus { border-color: #f4a340; background: #ffffff; }
+        button { background: #f4a340; color: white; border: none; padding: 10px 20px; border-radius: 9999px; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+        button:hover { background: #e8933a; transform: translateY(-1px); }
+        button.danger { background: #e85d4a; }
+        button.danger:hover { background: #d64a37; }
+        
+        /* Tabs */
+        .tabs { display: flex; gap: 8px; margin-bottom: 24px; background: #ffffff; padding: 6px; border-radius: 16px; border: 1px solid #e8e3d8; width: fit-content; }
+        .tab-btn { background: transparent; color: #6b6b6b; padding: 10px 22px; font-weight: 600; border-radius: 12px; cursor: pointer; border: none; }
+        .tab-btn.active { background: #f4a340; color: white; box-shadow: 0 2px 6px rgba(244,163,64,0.3); }
+        .tab-btn:hover:not(.active) { background: #faf8f3; color: #1a1a1a; }
+        
+        /* Tables */
+        table { width: 100%; border-collapse: separate; border-spacing: 0; margin-bottom: 20px; }
+        th, td { padding: 16px 18px; text-align: left; border-bottom: 1px solid #e8e3d8; font-size: 14px; vertical-align: middle; }
+        th { background-color: #faf8f3; color: #6b6b6b; font-weight: 600; }
+        tbody tr:hover { background-color: #faf8f3; }
+        .actions-col { width: 170px; text-align: right; }
+        
+        /* Action buttons inside table */
+        .btn-action-edit {
+            background: #2d2d2d !important;
+            color: #ffffff !important;
+            padding: 6px 14px !important;
+            font-size: 12px !important;
+            border-radius: 8px !important;
+            margin-right: 8px !important;
+            display: inline-block !important;
+        }
+        .btn-action-edit:hover { background: #1a1a1a !important; }
+        .btn-action-delete {
+            background: #e85d4a !important;
+            color: #ffffff !important;
+            padding: 6px 14px !important;
+            font-size: 12px !important;
+            border-radius: 8px !important;
+            display: inline-block !important;
+        }
+        .btn-action-delete:hover { background: #d64a37 !important; }
+        
+        /* Modals */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(45,45,45,0.45); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: white; padding: 32px; border-radius: 24px; border: 1px solid #e8e3d8; width: 100%; max-width: 540px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.12); }
+        
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 600; }
+        .bg-green { background: #2d2d2d; color: #ffffff; }
+        .bg-red { background: #faf8f3; color: #e85d4a; border: 1px solid #e85d4a; }
+        .bg-orange { background: #fef8ee; color: #d88325; border: 1px solid #f4a340; }
+        
+        .error-msg { color: #e85d4a; margin-bottom: 15px; font-size: 14px; font-weight: 500; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+
+        /* Analytics – KPI Cards */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px; margin-bottom: 12px; }
+        .kpi-card { background: #faf8f3; border: 1px solid #e8e3d8; border-radius: 18px; padding: 22px 16px; text-align: center; }
+        .kpi-card.kpi-green { border-bottom: 4px solid #2d2d2d; }
+        .kpi-card.kpi-red   { border-bottom: 4px solid #e85d4a; }
+        .kpi-card.kpi-orange{ border-bottom: 4px solid #f4a340; }
+        .kpi-value { font-size: 2.2rem; font-weight: 700; color: #1a1a1a; line-height: 1.1; }
+        .kpi-label { font-size: 0.82rem; color: #6b6b6b; margin-top: 6px; font-weight: 500; }
+
+        /* Analytics – language bars */
+        .lang-bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 0.9rem; }
+        .lang-bar-label { width: 100px; text-align: right; color: #6b6b6b; font-weight: 500; flex-shrink: 0; }
+        .lang-bar-track { flex: 1; background: #ffffff; border: 1px solid #e8e3d8; border-radius: 9999px; height: 16px; overflow: hidden; padding: 2px; }
+        .lang-bar-fill { height: 100%; background: #f4a340; border-radius: 9999px; transition: width 0.4s ease; }
+        .lang-bar-count { width: 44px; color: #1a1a1a; font-weight: 700; flex-shrink: 0; }
+
+        /* Analytics – stat boxes */
+        .stats-row { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 8px; }
+        .stat-box { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px 24px; text-align: center; min-width: 110px; }
+        .stat-box span { font-size: 1.6rem; font-weight: 700; color: #1a73e8; }
+        .stat-box.stat-green { border-left: 4px solid #34a853; }
+        .stat-box.stat-red   { border-left: 4px solid #ea4335; }
+        .stat-box.stat-orange{ border-left: 4px solid #fbbc04; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <!-- LOGIN VIEW -->
+        <div id="login-view" class="card">
+            <h2>Admin Portal Login</h2>
+            <div id="login-error" class="error-msg hidden"></div>
+            <input type="text" id="admin-username" placeholder="Username / Email" onkeydown="if(event.key === 'Enter') login()">
+            <input type="password" id="admin-password" placeholder="Password" onkeydown="if(event.key === 'Enter') login()">
+            <button type="button" id="login-btn" onclick="login()">Login</button>
+        </div>
+
+        <!-- DASHBOARD VIEW -->
+        <div id="dashboard-view" class="hidden">
+            <div class="flex-between">
+                <h1>Chatbot Admin Dashboard</h1>
+                <button onclick="logout()">Logout</button>
+            </div>
+            
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab(event, 'kb')">Knowledge Base</button>
+                <button class="tab-btn" onclick="switchTab(event, 'escalations')">Escalations</button>
+                <button class="tab-btn" onclick="switchTab(event, 'feedback')">Feedback</button>
+                <button class="tab-btn" onclick="switchTab(event, 'analytics')">📊 Analytics</button>
+            </div>
+
+            <!-- KB Tab -->
+            <div id="kb-tab" class="tab-content card">
+                <div class="flex-between" style="flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <h2>Knowledge Base Documents</h2>
+                        <div id="kb-count" style="font-size: 13px; color: #666; margin-top: -5px; margin-bottom: 5px;"></div>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <input type="text" id="kb-search-input" placeholder="Search title or content..." oninput="filterKbDocs()" style="margin-bottom: 0; padding: 8px 12px; width: 220px; font-size: 13px; border-radius: 4px; border: 1px solid #ccc;">
+                        <select id="kb-category-filter" onchange="filterKbDocs()" style="margin-bottom: 0; padding: 8px 12px; width: auto; font-size: 13px;">
+                            <option value="all">All Categories</option>
+                        </select>
+                        <select id="kb-verified-filter" onchange="loadKb()" style="margin-bottom: 0; padding: 8px 12px; width: auto; font-size: 13px;">
+                            <option value="all">All Documents</option>
+                            <option value="false">Unverified (Pending Review)</option>
+                            <option value="true">Verified (Approved)</option>
+                        </select>
+                        <button onclick="openKbModal()">+ Add Document</button>
+                    </div>
+                </div>
+
+                <table id="kb-table">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Category</th>
+                            <th>Language</th>
+                            <th>Status</th>
+                            <th class="actions-col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <!-- Escalations Tab -->
+            <div id="escalations-tab" class="tab-content card hidden">
+                <h2>Human Escalations</h2>
+                <table id="escalations-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Query</th>
+                            <th>Status</th>
+                            <th class="actions-col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <!-- Feedback Tab -->
+            <div id="feedback-tab" class="tab-content card hidden">
+                <h2>User Feedback</h2>
+                <table id="feedback-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Type</th>
+                            <th>Rating</th>
+                            <th>Comment/Reason</th>
+                            <th>User Details</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div id="analytics-tab" class="tab-content card hidden">
+                <div class="flex-between">
+                    <h2>📊 Analytics Dashboard</h2>
+                    <button type="button" onclick="loadAnalytics()" style="font-size:13px; padding:8px 14px;">🔄 Refresh</button>
+                </div>
+                <div id="analytics-loading" style="text-align:center; padding:30px; color:#888;">Loading analytics…</div>
+                <div id="analytics-content" class="hidden">
+
+                    <!-- KPI Cards -->
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <div class="kpi-value" id="kpi-total-queries">—</div>
+                            <div class="kpi-label">Total Queries</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-value" id="kpi-sessions">—</div>
+                            <div class="kpi-label">Unique Sessions</div>
+                        </div>
+                        <div class="kpi-card kpi-green">
+                            <div class="kpi-value" id="kpi-helpful">—</div>
+                            <div class="kpi-label">Helpful Feedback</div>
+                        </div>
+                        <div class="kpi-card kpi-red">
+                            <div class="kpi-value" id="kpi-not-helpful">—</div>
+                            <div class="kpi-label">Not Helpful</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-value" id="kpi-escalations">—</div>
+                            <div class="kpi-label">Total Escalations</div>
+                        </div>
+                        <div class="kpi-card kpi-orange">
+                            <div class="kpi-value" id="kpi-pending">—</div>
+                            <div class="kpi-label">Pending Escalations</div>
+                        </div>
+                    </div>
+
+                    <!-- Queries by Language -->
+                    <h3 style="margin-top:24px;">Queries by Language</h3>
+                    <div id="lang-bars"></div>
+
+                    <!-- Feedback Summary -->
+                    <h3 style="margin-top:24px;">Feedback Summary</h3>
+                    <div class="stats-row">
+                        <div class="stat-box stat-green"><span id="stat-helpful">—</span><br><small>Helpful</small></div>
+                        <div class="stat-box stat-red"><span id="stat-not-helpful">—</span><br><small>Not Helpful</small></div>
+                        <div class="stat-box"><span id="stat-pct">—</span><br><small>Helpful %</small></div>
+                    </div>
+
+                    <!-- Escalations Summary -->
+                    <h3 style="margin-top:24px;">Escalations Summary</h3>
+                    <div class="stats-row">
+                        <div class="stat-box"><span id="stat-esc-total">—</span><br><small>Total</small></div>
+                        <div class="stat-box stat-orange"><span id="stat-esc-pending">—</span><br><small>Pending</small></div>
+                    </div>
+
+                </div><!-- /analytics-content -->
+            </div><!-- /analytics-tab -->
+
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="kb-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2 id="kb-modal-title">Add Document</h2>
+            <input type="hidden" id="kb-id">
+            
+            <label>Title</label>
+            <input type="text" id="kb-title" required>
+            
+            <label>Category</label>
+            <input type="text" id="kb-category" placeholder="e.g., Admissions, Hostel">
+            
+            <label>Language</label>
+            <input type="text" id="kb-language" value="en" placeholder="e.g., en, hi">
+            
+            <label>Source URL (optional)</label>
+            <input type="text" id="kb-source">
+            
+            <label>Content</label>
+            <textarea id="kb-content" rows="6" required></textarea>
+            
+            <label>
+                <input type="checkbox" id="kb-verified"> Verified
+            </label>
+            
+            <div style="margin-top: 15px; display: flex; gap: 10px;">
+                <button onclick="saveKbDoc()">Save</button>
+                <button class="danger" onclick="closeModal('kb-modal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="esc-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Resolve Escalation</h2>
+            <input type="hidden" id="esc-id">
+            
+            <p><strong>Query:</strong> <span id="esc-query-text"></span></p>
+            
+            <label>Admin Response</label>
+            <textarea id="esc-response" rows="4" placeholder="How was this resolved?"></textarea>
+            
+            <div style="margin-top: 12px; padding: 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600;">
+                    <input type="checkbox" id="esc-add-to-kb" onchange="toggleEscKbFields(this.checked)" style="width: auto; margin: 0;">
+                    <span>Also add this as a Knowledge Base article</span>
+                </label>
+                <div id="esc-kb-fields" class="hidden" style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+                    <div>
+                        <label style="font-size: 12px; margin-bottom: 2px;">KB Title</label>
+                        <input type="text" id="esc-kb-title" placeholder="e.g. JEE Main Cutoff & Ranks">
+                    </div>
+                    <div>
+                        <label style="font-size: 12px; margin-bottom: 2px;">Category</label>
+                        <select id="esc-kb-category" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                            <option value="admission_process">Admissions & Eligibility (admission_process)</option>
+                            <option value="fees">Fee Structure (fees)</option>
+                            <option value="cutoffs">Cutoffs & Ranks (cutoffs)</option>
+                            <option value="hostel">Hostels & Accommodation (hostel)</option>
+                            <option value="scholarships">Scholarships (scholarships)</option>
+                            <option value="faculty">Faculty & Staff (faculty)</option>
+                            <option value="general">General / Campus Information (general)</option>
+                            <option value="contact">Contact & Helpline (contact)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 15px; display: flex; gap: 10px;">
+                <button onclick="submitEscalation()">Resolve</button>
+                <button class="danger" onclick="closeModal('esc-modal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:8000/api/admin';
+        let adminToken = localStorage.getItem('adminToken') || '';
+        let adminPass = '';
+
+        async function apiFetch(endpoint, method = 'GET', body = null) {
+            const headers = {};
+            if (adminToken) {
+                headers['Authorization'] = 'Bearer ' + adminToken;
+            } else if (adminPass) {
+                headers['X-Admin-Password'] = adminPass;
+            }
+            if (body) headers['Content-Type'] = 'application/json';
+            
+            const res = await fetch(API_BASE + endpoint, {
+                method,
+                headers,
+                body: body ? JSON.stringify(body) : null
+            });
+            
+            if (res.status === 401) throw new Error('Unauthorized');
+            if (!res.ok) {
+                const err = await res.json().catch(()=>({}));
+                throw new Error(err.error || 'Request failed');
+            }
+            return await res.json();
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        async function login() {
+            const usernameInput = document.getElementById('admin-username');
+            const pwdInput = document.getElementById('admin-password');
+            const loginBtn = document.getElementById('login-btn');
+            const errEl = document.getElementById('login-error');
+            
+            const username = usernameInput ? usernameInput.value.trim() : '';
+            const pwd = pwdInput.value.trim();
+            if (!pwd) return;
+            
+            // Set loading state
+            if (loginBtn) {
+                loginBtn.disabled = true;
+                loginBtn.innerText = 'Authenticating...';
+            }
+            if (errEl) errEl.classList.add('hidden');
+            
+            try {
+                // If username provided, authenticate with Django admin login API
+                if (username) {
+                    const authRes = await fetch(API_BASE + '/login/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username, password: pwd })
+                    });
+                    const authData = await authRes.json();
+                    if (!authRes.ok) {
+                        throw new Error(authData.error || 'Invalid credentials');
+                    }
+                    adminToken = authData.token;
+                    localStorage.setItem('adminToken', adminToken);
+                } else {
+                    // Fallback to legacy password
+                    adminPass = pwd;
+                }
+
+                // Verify by fetching KB
+                currentKbDocs = await apiFetch('/kb/');
+                
+                // Show dashboard upon success
+                document.getElementById('login-view').classList.add('hidden');
+                document.getElementById('dashboard-view').classList.remove('hidden');
+                
+                // Render table
+                renderKbTable(currentKbDocs);
+            } catch (err) {
+                errEl.innerText = err.message || 'Authentication failed. Please try again.';
+                errEl.classList.remove('hidden');
+                adminToken = '';
+                adminPass = '';
+            } finally {
+                if (loginBtn) {
+                    loginBtn.disabled = false;
+                    loginBtn.innerText = 'Login';
+                }
+            }
+        }
+        
+        async function logout() {
+            if (adminToken) {
+                try {
+                    await fetch(API_BASE + '/logout/', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + adminToken }
+                    });
+                } catch {}
+            }
+            adminToken = '';
+            adminPass = '';
+            localStorage.removeItem('adminToken');
+            if (document.getElementById('admin-password')) document.getElementById('admin-password').value = '';
+            document.getElementById('dashboard-view').classList.add('hidden');
+            document.getElementById('login-view').classList.remove('hidden');
+        }
+
+        function switchTab(evt, tabName) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            
+            if (evt && evt.target) evt.target.classList.add('active');
+            document.getElementById(tabName + '-tab').classList.remove('hidden');
+            
+            if (tabName === 'kb') loadKb();
+            else if (tabName === 'escalations') loadEscalations();
+            else if (tabName === 'feedback') loadFeedback();
+            else if (tabName === 'analytics') loadAnalytics();
+        }
+
+        function formatDate(dt) {
+            if (!dt) return 'N/A';
+            return new Date(dt).toLocaleString();
+        }
+
+        // ================= KNOWLEDGE BASE =================
+        let currentKbDocs = [];
+
+        async function loadKb() {
+            try {
+                const filterEl = document.getElementById('kb-verified-filter');
+                const val = filterEl ? filterEl.value : 'all';
+                let endpoint = '/kb/';
+                if (val === 'false' || val === 'true') {
+                    endpoint += '?verified=' + val;
+                }
+                currentKbDocs = await apiFetch(endpoint);
+                populateKbCategories(currentKbDocs);
+                filterKbDocs();
+            } catch (err) {
+                console.error('Failed to load KB docs:', err);
+            }
+        }
+
+        function populateKbCategories(docs) {
+            const catSelect = document.getElementById('kb-category-filter');
+            if (!catSelect) return;
+            const currentVal = catSelect.value;
+            const cats = Array.from(new Set(docs.map(d => d.category).filter(Boolean))).sort();
+            catSelect.innerHTML = '<option value="all">All Categories</option>' +
+                cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+            if (cats.includes(currentVal)) catSelect.value = currentVal;
+        }
+
+        function filterKbDocs() {
+            const searchInput = document.getElementById('kb-search-input');
+            const catSelect = document.getElementById('kb-category-filter');
+            const term = searchInput ? searchInput.value.toLowerCase().trim() : '';
+            const cat = catSelect ? catSelect.value : 'all';
+
+            const filtered = currentKbDocs.filter(doc => {
+                if (cat !== 'all' && (doc.category || '').toLowerCase() !== cat.toLowerCase()) {
+                    return false;
+                }
+                if (term) {
+                    const titleMatch = (doc.title || '').toLowerCase().includes(term);
+                    const contentMatch = (doc.content || '').toLowerCase().includes(term);
+                    const categoryMatch = (doc.category || '').toLowerCase().includes(term);
+                    return titleMatch || contentMatch || categoryMatch;
+                }
+                return true;
+            });
+
+            const countEl = document.getElementById('kb-count');
+            if (countEl) {
+                countEl.innerText = `Showing ${filtered.length} of ${currentKbDocs.length} documents`;
+            }
+
+            renderKbTable(filtered);
+        }
+
+
+        function renderKbTable(docs) {
+            const tbody = document.querySelector('#kb-table tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            
+            if (!docs || docs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5">No documents found.</td></tr>';
+                return;
+            }
+
+            docs.forEach(doc => {
+                const tr = document.createElement('tr');
+                const title = doc.title || 'Untitled';
+                const content = doc.content ? String(doc.content).substring(0, 50) : '';
+                const category = doc.category || '';
+                const language = doc.language || 'en';
+                const verified = !!doc.verified;
+                const id = doc._id || '';
+
+                tr.innerHTML = `
+                    <td><strong>${escapeHtml(title)}</strong><br><small style="color:gray">${escapeHtml(content)}...</small></td>
+                    <td>${escapeHtml(category)}</td>
+                    <td>${escapeHtml(language)}</td>
+                    <td><span class="badge ${verified ? 'bg-green' : 'bg-red'}">${verified ? 'Verified' : 'Unverified'}</span></td>
+                    <td>
+                        <button onclick="editKb('${id}')" style="padding:5px; font-size:12px;">Edit</button>
+                        <button class="danger" onclick="deleteKb('${id}')" style="padding:5px; font-size:12px;">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function openKbModal(docId = null) {
+            document.getElementById('kb-id').value = docId || '';
+            document.getElementById('kb-modal-title').innerText = docId ? 'Edit Document' : 'Add Document';
+            
+            if (docId) {
+                const doc = currentKbDocs.find(d => d._id === docId);
+                document.getElementById('kb-title').value = doc.title || '';
+                document.getElementById('kb-category').value = doc.category || '';
+                document.getElementById('kb-language').value = doc.language || 'en';
+                document.getElementById('kb-source').value = doc.source || '';
+                document.getElementById('kb-content').value = doc.content || '';
+                document.getElementById('kb-verified').checked = !!doc.verified;
+            } else {
+                document.getElementById('kb-title').value = '';
+                document.getElementById('kb-category').value = '';
+                document.getElementById('kb-language').value = 'en';
+                document.getElementById('kb-source').value = '';
+                document.getElementById('kb-content').value = '';
+                document.getElementById('kb-verified').checked = false;
+            }
+            document.getElementById('kb-modal').classList.remove('hidden');
+        }
+
+        async function saveKbDoc() {
+            const id = document.getElementById('kb-id').value;
+            const data = {
+                title: document.getElementById('kb-title').value,
+                category: document.getElementById('kb-category').value,
+                language: document.getElementById('kb-language').value,
+                source: document.getElementById('kb-source').value,
+                content: document.getElementById('kb-content').value,
+                verified: document.getElementById('kb-verified').checked
+            };
+            
+            try {
+                if (id) {
+                    await apiFetch(`/kb/${id}/`, 'PUT', data);
+                } else {
+                    await apiFetch('/kb/create/', 'POST', data);
+                }
+                closeModal('kb-modal');
+                loadKb();
+            } catch (err) {7
+                alert('Error: ' + err.message);
+            }
+        }
+
+        async function deleteKb(id) {
+            if (!confirm('Are you sure you want to delete this document?')) return;
+            try {
+                await apiFetch(`/kb/${id}/delete/`, 'DELETE');
+                loadKb();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        // ================= ESCALATIONS =================
+        let currentEscalations = [];
+        
+        async function loadEscalations() {
+            currentEscalations = await apiFetch('/escalations/');
+            const tbody = document.querySelector('#escalations-table tbody');
+            tbody.innerHTML = '';
+            
+            if (currentEscalations.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4">No escalations found.</td></tr>';
+                return;
+            }
+
+            currentEscalations.forEach(esc => {
+                const tr = document.createElement('tr');
+                const isResolved = esc.status === 'resolved';
+                
+                tr.innerHTML = `
+                    <td>${formatDate(esc.timestamp)}</td>
+                    <td><strong>${esc.query}</strong><br><small style="color:gray">${esc.response ? 'Response: ' + esc.response : ''}</small></td>
+                    <td><span class="badge ${isResolved ? 'bg-green' : 'bg-orange'}">${isResolved ? 'Resolved' : 'Pending'}</span></td>
+                    <td>
+                        ${!isResolved ? `<button onclick="openEscModal('${esc._id}')" style="padding:5px; font-size:12px;">Resolve</button>` : ''}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+        
+        function toggleEscKbFields(checked) {
+            const kbFields = document.getElementById('esc-kb-fields');
+            if (checked) {
+                kbFields.classList.remove('hidden');
+            } else {
+                kbFields.classList.add('hidden');
+            }
+        }
+
+        function openEscModal(id) {
+            const esc = currentEscalations.find(e => e._id === id);
+            document.getElementById('esc-id').value = id;
+            document.getElementById('esc-query-text').innerText = esc.query;
+            document.getElementById('esc-response').value = '';
+            
+            // Reset KB toggle and pre-fill title
+            const checkbox = document.getElementById('esc-add-to-kb');
+            checkbox.checked = false;
+            toggleEscKbFields(false);
+            
+            // Pre-fill a reasonable title derived from the query
+            const trimmedQuery = (esc.query || '').trim();
+            const derivedTitle = trimmedQuery.length > 60 ? trimmedQuery.slice(0, 57) + '...' : trimmedQuery;
+            document.getElementById('esc-kb-title').value = derivedTitle;
+            
+            // Auto-detect category from query keywords if possible
+            const qLower = trimmedQuery.toLowerCase();
+            const categorySelect = document.getElementById('esc-kb-category');
+            if (qLower.includes('fee') || qLower.includes('tuition')) {
+                categorySelect.value = 'fees';
+            } else if (qLower.includes('hostel') || qLower.includes('mess') || qLower.includes('room')) {
+                categorySelect.value = 'hostel';
+            } else if (qLower.includes('rank') || qLower.includes('cutoff') || qLower.includes('closing') || qLower.includes('opening')) {
+                categorySelect.value = 'admission_process';
+            } else if (qLower.includes('scholarship')) {
+                categorySelect.value = 'scholarships';
+            } else if (qLower.includes('faculty') || qLower.includes('dr.') || qLower.includes('professor') || qLower.includes('cabin')) {
+                categorySelect.value = 'faculty';
+            } else {
+                categorySelect.value = 'admission_process';
+            }
+
+            document.getElementById('esc-modal').classList.remove('hidden');
+        }
+        
+        async function submitEscalation() {
+            const id = document.getElementById('esc-id').value;
+            const response = document.getElementById('esc-response').value;
+            const addToKb = document.getElementById('esc-add-to-kb').checked;
+            const title = document.getElementById('esc-kb-title').value.trim();
+            const category = document.getElementById('esc-kb-category').value;
+            
+            if (!response.trim()) {
+                alert('Please provide an admin response.');
+                return;
+            }
+
+            const payload = {
+                response,
+                add_to_kb: addToKb,
+                title: title,
+                category: category
+            };
+            
+            try {
+                const res = await apiFetch(`/escalations/${id}/resolve/`, 'POST', payload);
+                if (res.kb_id) {
+                    alert('Escalation resolved and added to Knowledge Base!');
+                    loadKb(); // Refresh KB list so it appears in Knowledge Base tab immediately
+                }
+                closeModal('esc-modal');
+                loadEscalations();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        // ================= FEEDBACK =================
+        async function loadFeedback() {
+            const feedbacks = await apiFetch('/feedback/');
+            const tbody = document.querySelector('#feedback-table tbody');
+            tbody.innerHTML = '';
+            
+            if (feedbacks.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5">No feedback yet.</td></tr>';
+                return;
+            }
+
+            feedbacks.forEach(fb => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${formatDate(fb.timestamp)}</td>
+                    <td><span class="badge ${fb.feedback_type === 'general' ? 'bg-orange' : 'bg-green'}">${fb.feedback_type}</span></td>
+                    <td>${fb.rating || 'N/A'}</td>
+                    <td>
+                        ${fb.reason ? `<strong>${fb.reason}</strong><br>` : ''}
+                        ${fb.comment || ''}
+                    </td>
+                    <td>
+                        <small>
+                        ${fb.name ? 'Name: ' + fb.name + '<br>' : ''}
+                        ${fb.email ? 'Email: ' + fb.email + '<br>' : ''}
+                        Lang: ${fb.language || 'en'}
+                        </small>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // ================= ANALYTICS =================
+        async function loadAnalytics() {
+            const loading = document.getElementById('analytics-loading');
+            const content = document.getElementById('analytics-content');
+            loading.classList.remove('hidden');
+            content.classList.add('hidden');
+
+            try {
+                const data = await apiFetch('/analytics/');
+
+                // KPI cards
+                document.getElementById('kpi-total-queries').innerText = data.total_queries ?? 0;
+                document.getElementById('kpi-sessions').innerText = data.unique_sessions ?? '—';
+                document.getElementById('kpi-helpful').innerText = data.feedback.helpful ?? 0;
+                document.getElementById('kpi-not-helpful').innerText = data.feedback.not_helpful ?? 0;
+                document.getElementById('kpi-escalations').innerText = data.escalations.total ?? 0;
+                document.getElementById('kpi-pending').innerText = data.escalations.pending ?? 0;
+
+                // Language bars
+                const langBars = document.getElementById('lang-bars');
+                langBars.innerHTML = '';
+                const langs = data.queries_by_language || [];
+                const maxCount = langs.length > 0 ? Math.max(...langs.map(l => l.count)) : 1;
+                langs.forEach(item => {
+                    const pct = maxCount > 0 ? Math.round((item.count / maxCount) * 100) : 0;
+                    const row = document.createElement('div');
+                    row.className = 'lang-bar-row';
+                    row.innerHTML = `
+                        <div class="lang-bar-label">${escapeHtml(item.language)}</div>
+                        <div class="lang-bar-track"><div class="lang-bar-fill" style="width:${pct}%"></div></div>
+                        <div class="lang-bar-count">${item.count}</div>
+                    `;
+                    langBars.appendChild(row);
+                });
+                if (langs.length === 0) {
+                    langBars.innerHTML = '<p style="color:#888; font-size:0.9rem;">No query data yet.</p>';
+                }
+
+                // Feedback summary
+                document.getElementById('stat-helpful').innerText = data.feedback.helpful ?? 0;
+                document.getElementById('stat-not-helpful').innerText = data.feedback.not_helpful ?? 0;
+                document.getElementById('stat-pct').innerText = (data.feedback.helpful_percentage ?? 0) + '%';
+
+                // Escalations summary
+                document.getElementById('stat-esc-total').innerText = data.escalations.total ?? 0;
+                document.getElementById('stat-esc-pending').innerText = data.escalations.pending ?? 0;
+
+                loading.classList.add('hidden');
+                content.classList.remove('hidden');
+            } catch (err) {
+                loading.innerText = 'Failed to load analytics: ' + err.message;
+            }
+        }
+    </script>
+</body>
+</html>
